@@ -6,6 +6,7 @@ import quandl
 import math
 import random
 import os
+import datetime
 import numpy as np
 from sklearn import preprocessing, cross_validation, svm
 from sklearn.linear_model import LinearRegression
@@ -41,11 +42,30 @@ if 'ON_HEROKU' in os.environ:
 
 @app.route('/getstockdata/')
 def getStockData():
+    def loadFixedStockData():
+        dataFile = 'stockData.csv'
+        data = pd.read_csv(dataFile,parse_dates=True)
+        data = data.rename(columns={'DATE':'Date',
+        'TRADING CODE':'TradingCode',
+        'LTP*':'LTP',
+        'HIGH':'Adj. High',
+        'LOW':'Adj. Low',
+        'OPENP*':'Adj. Open',
+        'CLOSEP*':'Adj. Close',
+        'YCP':'YCP',
+        'TRADE':'Trade',
+        'VALUE (mn)':'Value',
+        'VOLUME':'Adj. Volume'})
+        data['Date'] = data['Date'].apply(lambda x: datetime.datetime.strptime(x, '%m/%d/%Y'))
+        data['Adj. Volume'] = data['Adj. Volume'].apply(lambda x: float(x.replace(',','')))
+        data = data.set_index('Date')
+        data.fillna(0.1, inplace=True)
+        return data.sort_index()
     stock = request.args.get('stock', default=None, type=None)
     quandl.ApiConfig.api_key = "qWcicxSctVxrP9PhyneG"
-    allData = quandl.get('WIKI/'+stock)
-    dataLength = 251
+    allData = loadFixedStockData() #quandl.get('WIKI/'+stock)
     allDataLength = len(allData)
+    dataLength = 251
     firstDataElem = math.floor(random.random()*(allDataLength-dataLength))
     mlData = allData[0:firstDataElem+dataLength]
 
@@ -54,7 +74,9 @@ def getStockData():
         dataArray['HL_PCT'] = (dataArray['Adj. High'] - dataArray['Adj. Close']) / dataArray['Adj. Close'] * 100.0
         dataArray['PCT_change'] = (dataArray['Adj. Close'] - dataArray['Adj. Open']) / dataArray['Adj. Open'] * 100.0
         dataArray = dataArray[['Adj. Close', 'HL_PCT', 'PCT_change','Adj. Volume']]
-        dataArray.fillna(-99999, inplace=True)
+        dataArray = dataArray.replace(0,0.1)
+        dataArray = dataArray.replace([np.inf,-np.inf],np.nan)
+        dataArray.fillna(0.1, inplace=True)
         return dataArray
 
     mlData = FormatForModel(mlData)
@@ -85,3 +107,7 @@ def getStockData():
     data['prediction'] = prediction[:]
     data = data.to_json(orient='table')
     return jsonify(data)
+
+
+app.run()
+

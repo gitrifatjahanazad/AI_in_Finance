@@ -481,7 +481,7 @@ class App extends Component {
       x: selectScaledX(datum),
       y: selectScaledY(datum),
     }));
-    var randStockName = this.state.randStock[0];
+    var randStockName = 'OurCustomStock'; //this.state.randStock[0];
     var title = [];
     if (currentData.length === data.length) {
       title.push(
