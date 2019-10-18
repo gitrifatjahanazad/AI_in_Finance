@@ -3,7 +3,7 @@
 source [https://github.com/austintackaberry/stocks](https://github.com/austintackaberry/stocks)
 
 # This example was used to feed only new local data set. Squarepharma from [https://www.dsebd.org/](https://www.dsebd.org/)
-
+**Special thanks to Nazmoon Noor Roni for Explaining me stock in simplest terms**
 
 
 This is the code for [this](https://youtu.be/7vunJlqLZok) video on Youtube by Siraj Raval. 
